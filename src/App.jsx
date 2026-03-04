@@ -105,7 +105,7 @@ export default function ViralAnalyzer() {
       throw new Error("Gemini API Key mancante o non valida nel file .env");
     }
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const body = {
       contents: [{
@@ -127,7 +127,7 @@ export default function ViralAnalyzer() {
       }],
       generationConfig: {
         response_mime_type: "application/json",
-        temperature: 0.7
+        temperature: 0.4
       }
     };
 
@@ -139,7 +139,11 @@ export default function ViralAnalyzer() {
     
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || "HTTP " + res.status);
+      const msg = err?.error?.message || "";
+      if (msg.includes("quota") || res.status === 429) {
+        throw new Error("Limite di quota raggiunto (Gemini Free Tier). Attendi un minuto o passa al piano Pay-as-you-go su Google AI Studio.");
+      }
+      throw new Error(msg || "HTTP " + res.status);
     }
     
     const data = await res.json();
