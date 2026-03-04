@@ -31,6 +31,28 @@ export default function AnalysisResult({ result, platform }) {
         </div>
       )}
 
+      {/* Real Statistics Report */}
+      {result.stats && (
+        <div className="stats-report-grid">
+          <div className="stat-card">
+            <span className="stat-label">VIEWS</span>
+            <span className="stat-value">{result.stats.views}</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">LIKES</span>
+            <span className="stat-value">{result.stats.likes}</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">ENGAGEMENT</span>
+            <span className="stat-value" style={{ color: 'var(--accent-cyan)' }}>{result.stats.engagementRate}</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">PUBBLICATO</span>
+            <span className="stat-value" style={{ fontSize: '11px' }}>{result.stats.postingDate}</span>
+          </div>
+        </div>
+      )}
+
       {/* Score + Radar Row */}
       <div className="glass-panel" style={{
         display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: 28

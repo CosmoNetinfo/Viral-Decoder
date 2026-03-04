@@ -7,6 +7,13 @@ const MOCK_DATA = {
   "title": "Come ho costruito un impero da 10M con l'AI (Demo)",
   "viralScore": 94,
   "viralCore": "L'uso di un contrasto netto tra fallimento iniziale e successo estremo, supportato da prove visive fast-paced.",
+  "stats": {
+    "views": "1.250.400",
+    "likes": "142.000",
+    "comments": "3.420",
+    "engagementRate": "11.6%",
+    "postingDate": "2 settimane fa"
+  },
   "scores": {
     "hook": 98,
     "retention": 89,
@@ -52,11 +59,11 @@ export default function ViralAnalyzer() {
   const loadingRef = useRef(null);
 
   const LOADING_MSGS = [
-    "Inizializzando Groq Engine...",
-    "Ottimizzando Qwen-2.5-72B...",
+    "Inizializzando Gemini 1.5 Flash...",
+    "Accesso a Google Search Grounding...",
+    "Recupero statistiche tempo reale...",
     "Analisi pattern virali in corso...",
-    "Decodifica trigger psicologici...",
-    "Generazione blueprint di produzione...",
+    "Generazione report dati...",
   ];
 
   useEffect(() => {
@@ -66,7 +73,7 @@ export default function ViralAnalyzer() {
       loadingRef.current = setInterval(() => {
         i = (i + 1) % LOADING_MSGS.length;
         setLoadingText(LOADING_MSGS[i]);
-      }, 1000);
+      }, 1200);
     } else {
       clearInterval(loadingRef.current);
     }
@@ -98,55 +105,60 @@ export default function ViralAnalyzer() {
     return result;
   };
 
-  const callGroq = async (prompt) => {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-    
-    if (!apiKey || apiKey.includes("xxxxxxxxxxxxxxxxxxxx")) {
-      throw new Error("Groq API Key mancante o non valida nel file .env");
-    }
+  const callGemini = async (prompt) => {
+    // We try both v1 and v1beta as fallback
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
 
-    const endpoint = "https://api.groq.com/openai/v1/chat/completions";
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey || apiKey.includes("xxxxxxxxxxxxxxxxxxxx")) {
+      throw new Error("Gemini API Key mancante o non valida nel file .env");
+    }
 
     const body = {
-      model: "qwen-2.5-32b-performance", // Or "llama-3.3-70b-versatile"
-      messages: [
-        {
-          role: "system",
-          content: `Sei un Creative Director esperto di crescita virale (specializzato in TikTok, Reels e Shorts). 
-          Il tuo obiettivo non è solo analizzare, ma fornire un BLUEPRINT DI AZIONE per replicare il successo di un video.
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
+      systemInstruction: {
+        parts: [{
+          text: `Sei un Creative Director e Analista Dati esperto di viralità social. 
+          Il tuo obiettivo è analizzare video virali tramite Google Search per fornire un REPORT STATISTICO e un BLUEPRINT DI AZIONE.
+          IMPORTANT: Trova dati REALI sul video (views, likes, engagement, data pubblicazione).
           Sii cinico, basati sui dati, identifica i trigger psicologici e spiega esattamente COSA filmare, COSA dire e QUALE audio usare.
           Rispondi SEMPRE in formato JSON puro seguendo lo schema richiesto.`
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.6,
-      max_tokens: 4000
+        }]
+      },
+      tools: [{
+        google_search_retrieval: {}
+      }],
+      generationConfig: {
+        response_mime_type: "application/json",
+        temperature: 0.3
+      }
     };
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(body)
-    });
-    
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const msg = err?.error?.message || "";
-      if (res.status === 429) {
-        throw new Error("Limite di quota raggiunto (Groq Free Tier). Attendi un minuto.");
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        return data.candidates[0].content.parts[0].text;
       }
-      throw new Error(msg || "HTTP " + res.status);
+
+      const err = await res.json().catch(() => ({}));
+      const msg = err?.error?.message || "HTTP " + res.status;
+      if (res.status === 429 || msg.includes("quota")) {
+        throw new Error("Limite di quota raggiunto (Gemini Free Tier). Attendi un minuto o passa al piano Pay-as-you-go.");
+      }
+      throw new Error(msg);
+    } catch (e) {
+      throw e;
     }
-    
-    const data = await res.json();
-    return data.choices[0].message.content;
   };
 
   const analyze = async () => {
@@ -156,32 +168,35 @@ export default function ViralAnalyzer() {
     setError("");
     try {
       const prompt = `Analizza questo video ${platform}: ${url}. 
-      Specifica perché è virale e prepara un piano per replicarlo.
+      Usa Google Search per estrarre statistiche reali (views, likes, engagement rate, data posting) e descrivere il contenuto.
       
       Restituisci ESATTAMENTE questo JSON:
       {
-        "title": "Titolo del video",
+        "title": "...",
         "viralScore": 0-100,
         "viralCore": "Il segreto n.1 da copiare",
+        "stats": {
+          "views": "...",
+          "likes": "...",
+          "comments": "...",
+          "engagementRate": "...",
+          "postingDate": "..."
+        },
         "scores": {"hook":0-100, "retention":0-100, "emotion":0-100, "trend":0-100, "shareability":0-100},
-        "hookAnalysis": "Analisi dettagliata dei primi 3-5 secondi",
+        "hookAnalysis": "Analisi dei primi 3-5 sec",
         "videoBlueprint": [
-          {"time": "0-3s", "action": "Cosa filmare/mostrare", "audio": "Cosa dire o che musica usare", "reason": "Perché questa scena trattiene l'utente"},
-          {"time": "3-10s", "action": "...", "audio": "...", "reason": "..."},
-          {"time": "10-25s", "action": "...", "audio": "...", "reason": "..."},
-          {"time": "25s+", "action": "Call to action e chiusura", "audio": "...", "reason": "..."}
+          {"time": "...", "action": "...", "audio": "...", "reason": "..."}
         ],
-        "emotionalTriggers": ["Trigger 1", "Trigger 2"],
-        "algorithmFactors": ["Fattore 1", "Fattore 2"],
-        "creativeStrategy": "Consiglio strategico personalizzato",
-        "weaknesses": ["Punto debole 1"],
-        "contentType": "Categoria video",
-        "targetAudience": "Chi guarda questo video",
+        "emotionalTriggers": ["...", "..."],
+        "creativeStrategy": "Consiglio strategico",
+        "weaknesses": ["..."],
+        "contentType": "...",
+        "targetAudience": "...",
         "bestPostingTime": "HH:MM",
-        "keyInsight": "Il takeaway finale"
+        "keyInsight": "..."
       }`;
 
-      const responseText = await callGroq(prompt);
+      const responseText = await callGemini(prompt);
       const sanitized = sanitizeJSON(responseText);
       const parsed = JSON.parse(sanitized);
       setResult(parsed);
@@ -199,7 +214,7 @@ export default function ViralAnalyzer() {
     setTimeout(() => {
       setResult(MOCK_DATA);
       setLoading(false);
-    }, 2000);
+    }, 2500);
   };
 
   return (
@@ -208,9 +223,9 @@ export default function ViralAnalyzer() {
       <div className="scanline" />
       <main className="content-wrapper">
         <header className="main-header">
-          <div className="header-badge">◈ SISTEMA DI INTELLIGENCE GROQ ◈</div>
+          <div className="header-badge">◈ DATA-DRIVEN INTELLIGENCE ◈</div>
           <h1 className="main-title"><GlitchText text="VIRAL DECODER" /></h1>
-          <p className="main-subtitle">QWEN POWERED. DECODIFICA L'ALGORITMO.</p>
+          <p className="main-subtitle">GEMINI PRO POWERED. ANALISI REALE DELLE STATISTICHE.</p>
         </header>
 
         <InputPanel 
@@ -237,13 +252,13 @@ export default function ViralAnalyzer() {
         {!loading && !result && !error && (
           <div className="empty-state">
             <div className="empty-icon">◈</div>
-            <div className="empty-text">INSERISCI UN URL PER INIZIARE L'ANALISI GRATUITA</div>
+            <div className="empty-text">INSERISCI UN URL PER ANALIZZARE I DATI REALI</div>
           </div>
         )}
       </main>
 
       <footer className="main-footer">
-        Powered by Qwen 2.5 on Groq (Free Tier) · CosmoNet
+        Powered by Gemini 1.5 Flash (Data Grounding) · CosmoNet
       </footer>
 
       <style>{`
