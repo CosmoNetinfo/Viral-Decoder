@@ -107,9 +107,8 @@ export default function ViralAnalyzer() {
 
   const callGemini = async (prompt) => {
     // We try both v1 and v1beta as fallback
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
-
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
     if (!apiKey || apiKey.includes("xxxxxxxxxxxxxxxxxxxx")) {
       throw new Error("Gemini API Key mancante o non valida nel file .env");
     }
