@@ -3,6 +3,45 @@ import GlitchText from "./components/GlitchText";
 import InputPanel from "./components/InputPanel";
 import AnalysisResult from "./components/AnalysisResult";
 
+const MOCK_DATA = {
+  "title": "Come ho costruito un impero da 10M con l'AI (Demo)",
+  "viralScore": 94,
+  "viralCore": "L'uso di un contrasto netto tra fallimento iniziale e successo estremo, supportato da prove visive fast-paced.",
+  "scores": {
+    "hook": 98,
+    "retention": 89,
+    "emotion": 92,
+    "trend": 85,
+    "shareability": 95
+  },
+  "hookAnalysis": "Il video inizia con un frame di un conto in rosso (-1.400€) seguito immediatamente da una transizione glitch verso una villa lussuosa. Questo 'pattern interrupt' cattura l'attenzione in meno di 0.5 secondi.",
+  "videoBlueprint": [
+    { "time": "0-3s", "action": "Mostra un fallimento umiliante (es. ufficio vuoto, conto corrente basso) con testo rosso grande.", "audio": "Suono di errore o silenzio improvviso.", "reason": "Crea empatia e curiosità immediata (Hook di contrasto)." },
+    { "time": "3-8s", "action": "Transizione rapida verso il successo. Montage di 0.5s per clip di lusso/risultati.", "audio": "Drop della musica (Phonk o Bass Boosted).", "reason": "Soddisfa il desiderio dello spettatore e promette una soluzione." },
+    { "time": "8-20s", "action": "Spiegazione rapida di 3 tool AI usati. Mostra lo schermo per 2s per ogni tool.", "audio": "Voiceover accelerata (1.2x) chiara.", "reason": "Fornisce valore pratico 'gratis', aumentando la salvataggio del video." },
+    { "time": "20-30s", "action": "Call to action: 'Commenta INFO per la guida'. Punta il dito verso il basso.", "audio": "Musica più calma, tono ispirazionale.", "reason": "Sfrutta l'algoritmo tramite i commenti per aumentare la reach." }
+  ],
+  "emotionalTriggers": [
+    "Speranza (dal fallimento al successo)",
+    "Avidità (guadagno facile con AI)",
+    "Filtro di autorità (mostra prove reali)"
+  ],
+  "algorithmFactors": [
+    "Alta velocità di montaggio (ritenzione)",
+    "Loop perfetto della musica",
+    "Trigger di commenti specifici (Keyword automation)"
+  ],
+  "creativeStrategy": "Crea una serie 'From Zero to Hero'. La gente ama le storie di riscatto. Usa sempre prove visive (screenshot, grafici) per validare ciò che dici.",
+  "weaknesses": [
+    "Troppo veloce per un pubblico over 45",
+    "Rischio di sembrare 'get rich quick' se non calibrato bene"
+  ],
+  "contentType": "Educational / Business Case Study",
+  "targetAudience": "Aspiring Entrepreneurs, Gen Z, Tech Enthusiasts",
+  "bestPostingTime": "18:30",
+  "keyInsight": "La viralità non è fortuna, è una struttura di contrasto emotivo supportata da micro-momenti di valore."
+};
+
 export default function ViralAnalyzer() {
   const [url, setUrl] = useState("");
   const [platform, setPlatform] = useState("YouTube");
@@ -151,6 +190,17 @@ export default function ViralAnalyzer() {
     setLoading(false);
   };
 
+  const startDemo = () => {
+    setLoading(true);
+    setResult(null);
+    setError("");
+    // Simulate loading sequence
+    setTimeout(() => {
+      setResult(MOCK_DATA);
+      setLoading(false);
+    }, 2500);
+  };
+
   return (
     <div className="app-container">
       <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet" />
@@ -166,6 +216,7 @@ export default function ViralAnalyzer() {
           url={url} setUrl={setUrl} 
           platform={platform} setPlatform={setPlatform} 
           analyze={analyze} loading={loading} 
+          startDemo={startDemo}
         />
 
         {loading && (
