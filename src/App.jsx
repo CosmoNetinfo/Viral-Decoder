@@ -222,6 +222,9 @@ export default function ViralAnalyzer() {
       <div className="scanline" />
       <main className="content-wrapper">
         <header className="main-header">
+          <div className="logo-container">
+            <img src="/logo.png" alt="Viral Decoder Logo" className="app-logo" />
+          </div>
           <div className="header-badge">◈ DATA-DRIVEN INTELLIGENCE ◈</div>
           <h1 className="main-title"><GlitchText text="VIRAL DECODER" /></h1>
           <p className="main-subtitle">GEMINI PRO POWERED. ANALISI REALE DELLE STATISTICHE.</p>

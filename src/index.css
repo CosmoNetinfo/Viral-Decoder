@@ -152,11 +152,28 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 100;
-  background: linear-gradient(
-    to bottom,
-    transparent 50%,
-    rgba(0, 229, 255, 0.01) 50%
-  );
+  background-size: 100% 4px;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.app-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.4));
+  animation: logo-float 4s ease-in-out infinite;
+}
+
+@keyframes logo-float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
 
 .stats-report-grid {
   display: grid;
