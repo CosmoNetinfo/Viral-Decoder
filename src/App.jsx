@@ -52,8 +52,8 @@ export default function ViralAnalyzer() {
   const loadingRef = useRef(null);
 
   const LOADING_MSGS = [
-    "Inizializzando Gemini 2.0 Flash...",
-    "Accesso a Google Search Grounding...",
+    "Inizializzando Groq Engine...",
+    "Ottimizzando Qwen-2.5-72B...",
     "Analisi pattern virali in corso...",
     "Decodifica trigger psicologici...",
     "Generazione blueprint di produzione...",
@@ -66,7 +66,7 @@ export default function ViralAnalyzer() {
       loadingRef.current = setInterval(() => {
         i = (i + 1) % LOADING_MSGS.length;
         setLoadingText(LOADING_MSGS[i]);
-      }, 1200);
+      }, 1000);
     } else {
       clearInterval(loadingRef.current);
     }
@@ -98,56 +98,55 @@ export default function ViralAnalyzer() {
     return result;
   };
 
-  const callGemini = async (prompt) => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const callGroq = async (prompt) => {
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
     
     if (!apiKey || apiKey.includes("xxxxxxxxxxxxxxxxxxxx")) {
-      throw new Error("Gemini API Key mancante o non valida nel file .env");
+      throw new Error("Groq API Key mancante o non valida nel file .env");
     }
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const endpoint = "https://api.groq.com/openai/v1/chat/completions";
 
     const body = {
-      contents: [{
-        parts: [{
-          text: prompt
-        }]
-      }],
-      systemInstruction: {
-        parts: [{
-          text: `Sei un Creative Director esperto di crescita virale (specializzato in TikTok, Reels e Shorts). 
+      model: "qwen-2.5-32b-performance", // Or "llama-3.3-70b-versatile"
+      messages: [
+        {
+          role: "system",
+          content: `Sei un Creative Director esperto di crescita virale (specializzato in TikTok, Reels e Shorts). 
           Il tuo obiettivo non è solo analizzare, ma fornire un BLUEPRINT DI AZIONE per replicare il successo di un video.
-          Usa Google Search per trovare dati REALI sul video (views, likes, engagement).
           Sii cinico, basati sui dati, identifica i trigger psicologici e spiega esattamente COSA filmare, COSA dire e QUALE audio usare.
           Rispondi SEMPRE in formato JSON puro seguendo lo schema richiesto.`
-        }]
-      },
-      tools: [{
-        google_search_retrieval: {}
-      }],
-      generationConfig: {
-        response_mime_type: "application/json",
-        temperature: 0.4
-      }
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.6,
+      max_tokens: 4000
     };
 
     const res = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
       body: JSON.stringify(body)
     });
     
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       const msg = err?.error?.message || "";
-      if (msg.includes("quota") || res.status === 429) {
-        throw new Error("Limite di quota raggiunto (Gemini Free Tier). Attendi un minuto o passa al piano Pay-as-you-go su Google AI Studio.");
+      if (res.status === 429) {
+        throw new Error("Limite di quota raggiunto (Groq Free Tier). Attendi un minuto.");
       }
       throw new Error(msg || "HTTP " + res.status);
     }
     
     const data = await res.json();
-    return data.candidates[0].content.parts[0].text;
+    return data.choices[0].message.content;
   };
 
   const analyze = async () => {
@@ -157,7 +156,6 @@ export default function ViralAnalyzer() {
     setError("");
     try {
       const prompt = `Analizza questo video ${platform}: ${url}. 
-      Usa Google Search per ottenere dati reali (views, likes, engagement rate, commenti).
       Specifica perché è virale e prepara un piano per replicarlo.
       
       Restituisci ESATTAMENTE questo JSON:
@@ -183,7 +181,7 @@ export default function ViralAnalyzer() {
         "keyInsight": "Il takeaway finale"
       }`;
 
-      const responseText = await callGemini(prompt);
+      const responseText = await callGroq(prompt);
       const sanitized = sanitizeJSON(responseText);
       const parsed = JSON.parse(sanitized);
       setResult(parsed);
@@ -198,11 +196,10 @@ export default function ViralAnalyzer() {
     setLoading(true);
     setResult(null);
     setError("");
-    // Simulate loading sequence
     setTimeout(() => {
       setResult(MOCK_DATA);
       setLoading(false);
-    }, 2500);
+    }, 2000);
   };
 
   return (
@@ -211,9 +208,9 @@ export default function ViralAnalyzer() {
       <div className="scanline" />
       <main className="content-wrapper">
         <header className="main-header">
-          <div className="header-badge">◈ SISTEMA DI INTELLIGENCE GEMINI ◈</div>
+          <div className="header-badge">◈ SISTEMA DI INTELLIGENCE GROQ ◈</div>
           <h1 className="main-title"><GlitchText text="VIRAL DECODER" /></h1>
-          <p className="main-subtitle">FREE TIER POWERED. DECODIFICA L'ALGORITMO.</p>
+          <p className="main-subtitle">QWEN POWERED. DECODIFICA L'ALGORITMO.</p>
         </header>
 
         <InputPanel 
@@ -246,7 +243,7 @@ export default function ViralAnalyzer() {
       </main>
 
       <footer className="main-footer">
-        Powered by Gemini 2.0 Flash (Free Tier) · CosmoNet
+        Powered by Qwen 2.5 on Groq (Free Tier) · CosmoNet
       </footer>
 
       <style>{`
